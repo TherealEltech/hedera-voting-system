@@ -1,0 +1,37 @@
+name: voting_system
+description: "A decentralized voting application using the Hedera network."
+
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.9.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  google_fonts: ^6.1.0
+  flutter_animate: ^4.5.0
+  shimmer: ^3.0.0
+  cupertino_icons: ^1.0.8
+
+  # Hedera & Web3 Integration
+  web3dart: ^2.7.3
+  http: ^1.1.0
+  flutter_dotenv: ^5.1.0
+
+  # Secure Storage for Private Keys
+  flutter_secure_storage: ^9.0.0
+  crypto: ^3.0.7
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+
+  # To add assets to your application, add an assets section, like this:
+  assets:
+    - .env
