@@ -83,7 +83,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     
                     // Title
                     Text(
-                      'Hedera Voting',
+                      'Eltech Hedera Voting',
                       style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
