@@ -152,18 +152,60 @@ class _VotingScreenState extends State<VotingScreen> {
   void _onVotePressed(int index) {
     if (_isLoading) return;
     setState(() => _selectedCandidateIndex = index);
-    _castVote();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Select a Candidate')),
+      appBar: AppBar(
+        title: const Text('Presidential Election 2027'),
+        centerTitle: true,
+      ),
       body: Column(
         children: [
+          // Header Section
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              border: Border(
+                bottom: BorderSide(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+            ),
+            child: Column(
+              children: [
+                Icon(
+                  Icons.how_to_vote_rounded,
+                  size: 40,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Select Your Candidate',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _selectedCandidateIndex != null
+                      ? 'Selected: ${_candidates[_selectedCandidateIndex!]}'
+                      : 'Tap a candidate card to select',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: _selectedCandidateIndex != null
+                        ? Colors.green[400]
+                        : Colors.grey[400],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
           Expanded(
-            // Instagram-like vertical feed: each candidate is a full-width card with image,
-            // name overlay and a "Vote" button on the image.
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(vertical: 8),
               itemCount: _candidates.length,
@@ -172,138 +214,115 @@ class _VotingScreenState extends State<VotingScreen> {
                 final imagePath = (index < _candidateImages.length)
                     ? _candidateImages[index]
                     : null;
+                final isSelected = _selectedCandidateIndex == index;
 
                 return Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Material(
-                      elevation: 2,
-                      child: Stack(
-                        children: [
-                          // Candidate image (asset). If not found, show colored placeholder.
-                          SizedBox(
-                            height: 420,
-                            width: double.infinity,
-                            child: imagePath != null
-                                ? Image.asset(
-                                    imagePath,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (ctx, err, stack) => Container(
-                                      color: Colors.grey[300],
-                                      alignment: Alignment.center,
-                                      child: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          const Icon(Icons.person, size: 64),
-                                          const SizedBox(height: 8),
-                                          Text(
-                                            name,
-                                            style: const TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                          const SizedBox(height: 6),
-                                          const Text('Image not found',
-                                              style: TextStyle(
-                                                  color: Colors.black54)),
-                                        ],
+                  child: GestureDetector(
+                    onTap: _isLoading ? null : () {
+                      setState(() => _selectedCandidateIndex = index);
+                    },
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Material(
+                        elevation: isSelected ? 8 : 2,
+                        child: Stack(
+                          children: [
+                            // Candidate image
+                            SizedBox(
+                              height: 420,
+                              width: double.infinity,
+                              child: imagePath != null
+                                  ? Image.asset(
+                                      imagePath,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (ctx, err, stack) => Container(
+                                        color: Colors.grey[300],
+                                        alignment: Alignment.center,
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(Icons.person, size: 64),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              name,
+                                              style: const TextStyle(
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.bold),
+                                            ),
+                                            const SizedBox(height: 6),
+                                            const Text('Image not found',
+                                                style: TextStyle(
+                                                    color: Colors.black54)),
+                                          ],
+                                        ),
                                       ),
+                                    )
+                                  : Container(
+                                      color: Colors.grey[300],
                                     ),
-                                  )
-                                : Container(
-                                    color: Colors.grey[300],
-                                  ),
-                          ),
+                            ),
 
-                          // Top-left name overlay
-                          Positioned(
-                            top: 12,
-                            left: 12,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: Colors.black54,
-                                borderRadius: BorderRadius.circular(8),
+                            // Selection overlay
+                            if (isSelected)
+                              Container(
+                                height: 420,
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: Colors.green,
+                                    width: 4,
+                                  ),
+                                ),
                               ),
-                              child: Text(
-                                name,
-                                style: const TextStyle(
+
+                            // Name overlay
+                            Positioned(
+                              top: 12,
+                              left: 12,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: isSelected 
+                                      ? Colors.green.withOpacity(0.9)
+                                      : Colors.black54,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  name,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            // Selection indicator
+                            Positioned(
+                              top: 12,
+                              right: 12,
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? Colors.green
+                                      : Colors.black45,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  isSelected
+                                      ? Icons.check_circle
+                                      : Icons.radio_button_unchecked,
                                   color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
+                                  size: 24,
                                 ),
                               ),
                             ),
-                          ),
-
-                          // Vote button overlay (bottom center)
-                          Positioned(
-                            bottom: 16,
-                            left: 0,
-                            right: 0,
-                            child: Center(
-                              child: SizedBox(
-                                width: 160,
-                                child: ElevatedButton.icon(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: _selectedCandidateIndex ==
-                                            index
-                                        ? Colors.green[700]
-                                        : null,
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 12, horizontal: 12),
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(8)),
-                                  ),
-                                  onPressed:
-                                      _isLoading ? null : () => _onVotePressed(index),
-                                  icon: _isLoading && _selectedCandidateIndex == index
-                                      ? const SizedBox(
-                                          width: 18,
-                                          height: 18,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            color: Colors.white,
-                                          ),
-                                        )
-                                      : const Icon(Icons.how_to_vote),
-                                  label: Text(
-                                    _isLoading && _selectedCandidateIndex == index
-                                        ? 'Voting...'
-                                        : 'Vote',
-                                    style: const TextStyle(fontSize: 16),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          // Small selection indicator (top-right)
-                          Positioned(
-                            top: 12,
-                            right: 12,
-                            child: Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                color: (_selectedCandidateIndex == index)
-                                    ? Colors.greenAccent.withOpacity(0.9)
-                                    : Colors.black45,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                _selectedCandidateIndex == index
-                                    ? Icons.check
-                                    : Icons.how_to_vote_outlined,
-                                color: Colors.white,
-                                size: 18,
-                              ),
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -312,46 +331,44 @@ class _VotingScreenState extends State<VotingScreen> {
             ),
           ),
 
-          // Bottom controls: view results and a little spacing.
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _isLoading
-                        ? null
-                        : () {
-                            Navigator.pushNamed(
-                                context, ResultScreen.routeName);
-                          },
-                    child: const Text('View Current Results'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                SizedBox(
-                  width: 120,
-                  child: ElevatedButton(
-                    onPressed: _isLoading
-                        ? null
-                        : () {
-                            // If user wants to cast vote by pressing the bottom button,
-                            // ensure a candidate is selected first.
-                            _castVote();
-                          },
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 18,
-                            width: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text('Cast Vote'),
-                  ),
+          // Bottom Cast Vote button
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, -2),
                 ),
               ],
+            ),
+            child: SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: ElevatedButton.icon(
+                onPressed: _isLoading ? null : _castVote,
+                icon: _isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.how_to_vote),
+                label: Text(
+                  _isLoading ? 'Casting Vote...' : 'Cast Vote',
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _selectedCandidateIndex != null
+                      ? Theme.of(context).colorScheme.primary
+                      : null,
+                ),
+              ),
             ),
           ),
         ],

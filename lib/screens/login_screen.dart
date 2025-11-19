@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:voting_system/screens/voting_screen.dart';
+import 'package:voting_system/screens/result_screen.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:voting_system/hedera_service.dart';
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,20 +20,76 @@ class _LoginScreenState extends State<LoginScreen> {
   final _ninController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
+  HederaService? _hederaService;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeHederaService();
+  }
+
+  Future<void> _initializeHederaService() async {
+    String privateKey = 'f2128476dae792d633638d43259b3c465a3eaf05eaabc9f5de7ee7de54de6ff7';
+    _hederaService = HederaService(privateKey: privateKey);
+  }
+
+  String _generateNINHash(String nin) {
+    final bytes = utf8.encode(nin);
+    final digest = sha256.convert(bytes);
+    return '0x${digest.toString()}';
+  }
 
   void _signIn() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
-    // Simulate network delay for better UX
-    await Future.delayed(const Duration(milliseconds: 800));
+    try {
+      // Check if this NIN has already voted
+      if (_hederaService != null) {
+        String ninHash = _generateNINHash(_ninController.text);
+        bool hasVoted = await _hederaService!.checkIfVoted(ninHash);
+        
+        if (hasVoted) {
+          if (mounted) {
+            setState(() => _isLoading = false);
+            showDialog(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: const Text('Already Voted'),
+                content: const Text(
+                  'You have already cast your vote with this NIN. Each voter can only vote once.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    child: const Text('OK'),
+                  ),
+                ],
+              ),
+            );
+          }
+          return;
+        }
+      }
 
-    await _storage.write(key: 'user_nin', value: _ninController.text);
-    
-    if (mounted) {
-      setState(() => _isLoading = false);
-      Navigator.pushReplacementNamed(context, VotingScreen.routeName);
+      // Store NIN and proceed to voting
+      await _storage.write(key: 'user_nin', value: _ninController.text);
+      
+      if (mounted) {
+        setState(() => _isLoading = false);
+        Navigator.pushReplacementNamed(context, VotingScreen.routeName);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -81,9 +141,24 @@ class _LoginScreenState extends State<LoginScreen> {
                     
                     const SizedBox(height: 32),
                     
+                    // Company Name
+                    Text(
+                      'ElTech',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.primary,
+                        letterSpacing: 2,
+                      ),
+                      textAlign: TextAlign.center,
+                    ).animate()
+                      .fadeIn(delay: 250.ms)
+                      .slideY(begin: 0.3, end: 0),
+                    
+                    const SizedBox(height: 8),
+                    
                     // Title
                     Text(
-                      'Hedera Voting',
+                      'Hedera Voting System',
                       style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -175,6 +250,23 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ).animate()
                       .fadeIn(delay: 600.ms)
+                      .slideY(begin: 0.2, end: 0),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // View Results Button
+                    SizedBox(
+                      height: 56,
+                      child: OutlinedButton(
+                        onPressed: _isLoading
+                            ? null
+                            : () {
+                                Navigator.pushNamed(context, ResultScreen.routeName);
+                              },
+                        child: const Text('View Current Results'),
+                      ),
+                    ).animate()
+                      .fadeIn(delay: 650.ms)
                       .slideY(begin: 0.2, end: 0),
                     
                     const SizedBox(height: 24),

@@ -248,6 +248,27 @@ Future<List<Map<String, dynamic>>> getAllCandidates() async {
   }
 }
 
+  /// Check if a NIN hash has already voted
+  Future<bool> checkIfVoted(String ninHash) async {
+    try {
+      final function = _contract.function('checkIfVoted');
+      
+      // Convert hex string to bytes32
+      final hashBytes = hex.decode(ninHash.replaceFirst('0x', ''));
+      
+      final result = await _web3client.call(
+        contract: _contract,
+        function: function,
+        params: [Uint8List.fromList(hashBytes)],
+      );
+      
+      return result[0] as bool;
+    } catch (e) {
+      print("Error checking if voted: $e");
+      return false;
+    }
+  }
+
   /// Check how many candidates are in the contract
 Future<void> debugContractState() async {
   try {
